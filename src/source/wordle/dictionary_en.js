@@ -1,4 +1,4 @@
-window['dictionnary'] = [
+window['dictionary'] = [
 'aahed',
 'aalii',
 'aargh',

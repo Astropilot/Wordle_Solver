@@ -4,13 +4,14 @@ interface Window {
 
 interface LetterInfo {
   letter: string;
-  type: 'missing' | 'misplaced' | 'correct';
+  type: 'absent' | 'present' | 'correct';
   index: number;
 }
 
-interface LetterMisplaced {
+interface LetterFilter {
   count: number;
   countType: 'min' | 'exact';
+  matchPositions: number[];
   forbiddenPositions: number[];
 }
 
@@ -22,7 +23,7 @@ interface GameApp {
 
 const IS_DEBUG = true;
 const wordle: any = window['wordle'];
-const dictionnary = window['dictionnary'];
+const dictionary = window['dictionary'];
 
 function getGameElement(): Element | null | undefined {
   return document.querySelector('body > game-app')
@@ -54,132 +55,79 @@ function letterCountInString(str: string, letter: string): number {
   return (str.match(reg) || []).length;
 }
 
-function constructRegexQuery(row: Element): string {
-  const rowCellElements = row.shadowRoot
-    ?.querySelector('div[class="row"]')
-    ?.querySelectorAll('game-tile')!;
-  let regexQuery = '';
+function letterCountInRow(rowInfo: LetterInfo[], letter: string): number {
+  let count = 0;
 
-  rowCellElements.forEach(cellElement => {
-    const cellTileElement = cellElement!.shadowRoot!.querySelector<HTMLElement>('div[class="tile"]')!;
-    const cellLetter = cellTileElement.textContent!;
-    const cellType = cellTileElement.dataset['state'];
+  for (const letter_info of rowInfo) {
+    if (letter_info.letter === letter && letter_info.type !== 'absent') {
+      count++;
+    }
+  }
 
-    if (cellType === 'empty' || cellType !== 'correct')
-      regexQuery += '.';
-    else
-      regexQuery += cellLetter;
-  });
-
-  return regexQuery;
+  return count;
 }
 
-function constructFiltersQuery(rowElement: Element, lettersInWord: Map<string, LetterMisplaced>, lettersNotInWord: Set<string>): void {
+function constructRowInfo(rowElement: Element): LetterInfo[] {
   const letterCellElements = rowElement.shadowRoot
     ?.querySelector('div[class="row"]')
-    ?.querySelectorAll('game-tile')!;;
-  let rowInfo: LetterInfo[] = [];
+    ?.querySelectorAll('game-tile')!;
+  const rowInfo: LetterInfo[] = [];
 
   // We construct our row with easy to access information for each letter
   for (let j = 0; j < letterCellElements.length; j++) {
     const cellElement = letterCellElements.item(j).shadowRoot!.querySelector<HTMLElement>('div[class="tile"]')!;
     const letter = cellElement.textContent || '';
-    let cellType: 'missing' | 'misplaced' | 'correct';
+    let cellType: 'absent' | 'present' | 'correct';
 
     if (cellElement.dataset['state'] === 'absent') {
-      cellType = 'missing';
+      cellType = 'absent';
     } else if (cellElement.dataset['state'] === 'present') {
-      cellType = 'misplaced';
+      cellType = 'present';
     } else if (cellElement.dataset['state'] === 'correct') {
       cellType = 'correct';
     } else {
-      if (IS_DEBUG) console.error(`Letter "${letter}" on cell index ${j} do not have any type!`, rowElement);
-      cellType = 'missing';
+      if (IS_DEBUG) console.error(`Letter "${letter}" on cell index ${j} do not have any valid type!`, rowElement);
+      cellType = 'absent';
     }
 
     rowInfo.push({ letter: letter, type: cellType, index: j });
   }
 
-  // For each "missing" letter, we add it to our letter exclude list
-  for (const letter_info of rowInfo) {
-    if (letter_info.type === 'missing') {
-      lettersNotInWord.add(letter_info.letter);
+  return rowInfo;
+}
+
+function constructFiltersQuery(rowInfo: LetterInfo[], lettersFilters: Map<string, LetterFilter>): void {
+  for (const letterInfo of rowInfo) {
+    const letterCount = letterCountInRow(rowInfo, letterInfo.letter);
+
+    if (lettersFilters.has(letterInfo.letter)) {
+      lettersFilters.get(letterInfo.letter)!.count = letterCount;
+    } else {
+      lettersFilters.set(letterInfo.letter, {
+        count: letterCount,
+        countType: 'min',
+        matchPositions: [],
+        forbiddenPositions: []
+      });
     }
-  }
 
-  for (const letter_info of rowInfo) {
-    if (letter_info.type === 'correct') {
-      // If for any reason a correct letter is in the exclude list, we remove it
-      if (lettersNotInWord.has(letter_info.letter))
-        lettersNotInWord.delete(letter_info.letter);
-
-      if (lettersInWord.has(letter_info.letter)) {
-        const info = lettersInWord.get(letter_info.letter)!;
-
-        lettersInWord.set(letter_info.letter, {
-          count: info.count - 1,
-          countType: info.count - 1 === 0 ? 'min' : info.countType,
-          forbiddenPositions: info.forbiddenPositions
-        });
-      }
-    } else if (letter_info.type === 'misplaced') {
-      if (lettersInWord.has(letter_info.letter)) {
-        const info = lettersInWord.get(letter_info.letter)!;
-        let countLetter = 0;
-        for (const li of rowInfo) {
-          if (li.type === 'misplaced' && li.letter === letter_info.letter) {
-            countLetter++;
-          }
-        }
-
-        lettersInWord.set(letter_info.letter, {
-          count: countLetter,
-          countType: info.countType,
-          forbiddenPositions: [...info.forbiddenPositions, letter_info.index]
-        });
-      } else {
-        lettersInWord.set(letter_info.letter, {
-          count: 1,
-          countType: 'min',
-          forbiddenPositions: [letter_info.index]
-        });
-      }
-
-      if (lettersNotInWord.has(letter_info.letter)) {
-        const info = lettersInWord.get(letter_info.letter)!;
-
-        lettersInWord.set(letter_info.letter, {
-          count: info.count,
-          countType: 'exact',
-          forbiddenPositions: info.forbiddenPositions
-        });
-        lettersNotInWord.delete(letter_info.letter);
-      }
+    if (letterInfo.type === 'absent') {
+      lettersFilters.get(letterInfo.letter)!.countType = 'exact';
+    } else if (letterInfo.type === 'present') {
+      lettersFilters.get(letterInfo.letter)!.forbiddenPositions.push(letterInfo.index);
+    } else if (letterInfo.type === 'correct') {
+      lettersFilters.get(letterInfo.letter)!.matchPositions.push(letterInfo.index);
     }
   }
 }
 
-function filterDictionnaryFromQuery(dictionnary: string[], searchRegex: string, lettersInWord: Map<string, LetterMisplaced>, lettersNotInWord: Set<string>): string {
+function filterDictionary(dictionnary: string[], lettersFilters: Map<string, LetterFilter>, wordSize: number): string {
   let potentialWords: string[] = [];
-  const wordRegex = new RegExp(`^${searchRegex}$`);
 
-  // Step n°1: We filter out all words that do not match the regex (letters that are known to be correctly placed)
-  potentialWords = dictionnary.filter(word => wordRegex.test(word));
+  potentialWords = dictionnary.filter(word => {
+    if (word.length !== wordSize) return false;
 
-  // Step n°2: We filter out all words that contains letters that cannot be in the final word
-  potentialWords = potentialWords.filter(word => {
-    for (const letter of lettersNotInWord) {
-      if (word.includes(letter)) return false;
-    }
-    return true;
-  });
-
-  // Step n°3: Based on misplaced letters, we filter out words that have
-  // too little or not the exact amount of a letter that we know.
-  // Plus we check that for each impossible position we do not have
-  // a unwanted letter.
-  potentialWords = potentialWords.filter(word => {
-    for (const [letter, info] of lettersInWord) {
+    for (const [letter, info] of lettersFilters) {
       var occurence_count = letterCountInString(word, letter);
 
       if (info.countType === 'min' && occurence_count < info.count) return false;
@@ -187,6 +135,10 @@ function filterDictionnaryFromQuery(dictionnary: string[], searchRegex: string, 
 
       for (const letterPosition of info.forbiddenPositions) {
         if (word[letterPosition] === letter) return false;
+      }
+
+      for (const letterPosition of info.matchPositions) {
+        if (word[letterPosition] !== letter) return false;
       }
     }
     return true;
@@ -216,25 +168,26 @@ function sendWordToVirtualKeyboard(word: string): void {
   getKeyboardElement()?.querySelector<HTMLElement>('button[data-key="↵"]')?.click();
 }
 
-async function startGame(dictionnary: string[]) {
-  const lettersInWord = new Map<string, LetterMisplaced>();
-  const lettersNotInWord = new Set<string>();
+async function startGame(dictionary: string[]) {
+  const lettersFilters = new Map<string, LetterFilter>();
 
   while (!isGameFinished()) {
     const game: GameApp = new window['wordle'].bundle.GameApp();
     const currentLineIndex = game.rowIndex;
-
     const gridRows = getGameElement()?.querySelectorAll('game-row')!;
-    const searchRegex = constructRegexQuery(gridRows[(currentLineIndex - 1 < 0) ? 0 : currentLineIndex - 1]!);
+    const wordSize = gridRows[0]!.shadowRoot!
+                        .querySelector('div[class="row"]')!
+                        .querySelectorAll('game-tile')!.length;
 
-    if (currentLineIndex > 0)
-      constructFiltersQuery(gridRows[currentLineIndex - 1]!, lettersInWord, lettersNotInWord);
+    if (currentLineIndex > 0) {
+      const rowInfo = constructRowInfo(gridRows[currentLineIndex - 1]!);
 
-    if (IS_DEBUG) console.log('Word regex', searchRegex);
-    if (IS_DEBUG) console.log('Letters that should be in the word', lettersInWord);
-    if (IS_DEBUG) console.log('Letters that should not be in the word', lettersNotInWord);
+      constructFiltersQuery(rowInfo, lettersFilters);
+    }
 
-    const finalWord = filterDictionnaryFromQuery(dictionnary, searchRegex, lettersInWord, lettersNotInWord);
+    if (IS_DEBUG) console.log('Letters filters', lettersFilters);
+
+    const finalWord = filterDictionary(dictionary, lettersFilters, wordSize);
 
     if (IS_DEBUG) console.log('Final word to write', finalWord);
 
@@ -266,7 +219,7 @@ async function startGame(dictionnary: string[]) {
 
   buttonResolve.addEventListener('click', async function handler() {
     this.removeEventListener('click', handler);
-    await startGame(dictionnary);
+    await startGame(dictionary);
     divResolve.remove();
     if (IS_DEBUG) console.log('Game finished!');
   });

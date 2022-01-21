@@ -30,7 +30,7 @@
     }
   ],
   "web_accessible_resources": [
-    "wordle/dictionnary_en.js",
+    "wordle/dictionary_en.js",
     "wordle/solver.js"
   ]
 }

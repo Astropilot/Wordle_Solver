@@ -1,11 +1,11 @@
 const scriptSolver = document.createElement('script');
-const scriptDictionnary = document.createElement('script');
+const scriptDictionary = document.createElement('script');
 
 scriptSolver.src = chrome.extension.getURL('wordle/solver.js');
-scriptDictionnary.src = chrome.extension.getURL('wordle/dictionnary_en.js');
+scriptDictionary.src = chrome.extension.getURL('wordle/dictionary_en.js');
 
-scriptDictionnary.onload = () => {
+scriptDictionary.onload = () => {
   document.head.append(scriptSolver);
 };
 
-document.head.append(scriptDictionnary);
+document.head.append(scriptDictionary);
