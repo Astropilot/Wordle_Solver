@@ -80,7 +80,8 @@
     "ignores": [
       "source/vendors",
       "distribution",
-      "test"
+      "test",
+      "source/wordle/dictionary_en.js"
     ],
     "globals": [
       "browser",

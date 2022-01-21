@@ -5,4 +5,6 @@ declare module 'webextension-polyfill' {
   export = browser;
 }
 
-interface Window { wordle: any; }
+interface Window {
+  wordle: any;
+}

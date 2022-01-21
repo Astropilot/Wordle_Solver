@@ -2,7 +2,7 @@
 
 import path from 'path';
 
-import { Configuration } from 'webpack';
+import {Configuration} from 'webpack';
 import SizePlugin from 'size-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
@@ -13,7 +13,7 @@ const config: Configuration = {
   stats: {
     all: false,
     errors: true,
-    builtAt: true
+    builtAt: true,
   },
   entry: Object.fromEntries([
     'wordle/solver',
@@ -21,7 +21,7 @@ const config: Configuration = {
   ].map(name => [name, `./source/${name}`])),
   output: {
     path: path.join(__dirname, 'distribution'),
-    filename: '[name].js'
+    filename: '[name].js',
   },
   module: {
     rules: [
@@ -31,20 +31,20 @@ const config: Configuration = {
         options: {
           transpileOnly: true,
           compilerOptions: {
-            module: 'es2015'
-          }
+            module: 'es2015',
+          },
         },
-        exclude: /node_modules/
+        exclude: /node_modules/,
       },
       {
         test: /\.sc|ass$/,
         use: [
           MiniCssExtractPlugin.loader,
           'css-loader',
-          'sass-loader'
-        ]
-      }
-    ]
+          'sass-loader',
+        ],
+      },
+    ],
   },
   plugins: [
     new CopyWebpackPlugin({
@@ -55,25 +55,25 @@ const config: Configuration = {
             ignore: [
               '**/*.ts',
               '**/*.scss',
-              '**/*.css'
-            ]
-          }
-        }
-      ]
+              '**/*.css',
+            ],
+          },
+        },
+      ],
     }),
     new MiniCssExtractPlugin({
-			filename: '[name].css'
-		}),
+      filename: '[name].css',
+    }),
     new SizePlugin({
-      writeFile: false
-    })
+      writeFile: false,
+    }),
   ],
   resolve: {
     extensions: [
       '.ts',
-      '.js'
+      '.js',
     ],
-    modules: ['node_modules']
+    modules: ['node_modules'],
   },
   optimization: {
     minimizer: [
@@ -90,16 +90,16 @@ const config: Configuration = {
             join_vars: false,
             booleans: false,
             expression: false,
-            sequences: false
+            sequences: false,
           },
           output: {
             beautify: true,
-            indent_level: 2
-          }
-        }
-      })
-    ]
-  }
+            indent_level: 2,
+          },
+        },
+      }),
+    ],
+  },
 };
 
 export default config;
