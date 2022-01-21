@@ -21,7 +21,7 @@ interface GameApp {
   rowIndex: number;
 }
 
-const IS_DEBUG = true;
+const IS_DEBUG = false;
 const wordle: any = window['wordle'];
 const dictionary = window['dictionary'];
 
@@ -147,15 +147,18 @@ function filterDictionary(dictionnary: string[], lettersFilters: Map<string, Let
   if (IS_DEBUG) console.log('Potential words list', potentialWords);
 
   // We count the number of vowels for each potential words
-  // const wordsWithVowelCount = new Map<string, number>();
-  // for (const word of potentialWords) {
-  //   const count = word.replaceAll('[^AEIOU]', '').length;
+  const wordsWithVowelCount = new Map<string, number>();
+  for (const word of potentialWords) {
+    const count = word.replaceAll('[^AEIOU]', '').length;
 
-  //   wordsWithVowelCount.set(word, count);
-  // }
+    wordsWithVowelCount.set(word, count);
+  }
 
-  // // We return the word with the highest count of vowels
-  // const finalWord = [...wordsWithVowelCount.entries()].reduce((a, e) => e[1] > a[1] ? e : a)[0];
+  const maxVowelCount = Math.max(...wordsWithVowelCount.values());
+
+  potentialWords = [...wordsWithVowelCount.entries()].filter(entry => entry[1] === maxVowelCount).map(entry => entry[0]);
+
+  // We return a word with the highest count of vowels
   const finalWord = potentialWords[Math.floor(Math.random()*potentialWords.length)]!;
 
   return finalWord;
