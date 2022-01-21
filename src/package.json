@@ -1,0 +1,104 @@
+{
+  "name": "wordle_solver",
+  "version": "0.0.1",
+  "private": true,
+  "description": "A small web extension to automatically solve the Wordle game",
+  "scripts": {
+    "lint": "run-p lint:* --continue-on-error",
+    "lint:js": "xo",
+    "lint:css": "stylelint source/animes/style.css",
+    "build": "run-p build:* --continue-on-error",
+    "build:typescript": "tsc --noEmit",
+    "build:webpack": "webpack --mode=production",
+    "watch": "run-p watch:* --continue-on-error",
+    "watch:typescript": "tsc --noEmit --watch --preserveWatchOutput",
+    "watch:webpack": "webpack --mode=development --watch",
+    "start": "web-ext run --target=chromium",
+    "start:firefox": "web-ext run",
+    "version+": "node scripts/version+.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Astropilot/Wordle_Solver.git"
+  },
+  "keywords": [
+    "web-extension",
+    "wordle",
+    "typescript"
+  ],
+  "author": "Yohann MARTIN (Astropilot)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Astropilot/Wordle_Solver/issues"
+  },
+  "homepage": "https://github.com/Astropilot/Wordle_Solver#readme",
+  "dependencies": {
+    "webextension-polyfill": "^0.8.0"
+  },
+  "devDependencies": {
+    "@sindresorhus/tsconfig": "^2.0.0",
+    "@types/chrome": "0.0.176",
+    "@types/firefox-webext-browser": "^94.0.1",
+    "copy-webpack-plugin": "^10.2.0",
+    "css-loader": "^6.5.1",
+    "expose-loader": "^3.1.0",
+    "mini-css-extract-plugin": "^2.5.2",
+    "node-sass": "^7.0.1",
+    "npm-run-all": "^4.1.5",
+    "path": "^0.12.7",
+    "sass-loader": "^12.4.0",
+    "size-plugin": "^2.0.2",
+    "stylelint": "^14.2.0",
+    "stylelint-config-xo-space": "^0.15.1",
+    "terser-webpack-plugin": "^5.3.0",
+    "ts-loader": "^9.2.6",
+    "ts-node": "^10.4.0",
+    "type-fest": "^2.10.0",
+    "typescript": "^4.5.4",
+    "web-ext": "^6.6.0",
+    "webpack": "^5.66.0",
+    "webpack-cli": "^4.9.1",
+    "xo": "^0.47.0"
+  },
+  "webExt": {
+    "sourceDir": "distribution",
+    "run": {
+      "keepProfileChanges": true,
+      "firefoxProfile": "./test/web-ext-profile",
+      "chromiumProfile": "./test/web-ext-profile",
+      "startUrl": [
+        "https://www.powerlanguage.co.uk/wordle/"
+      ]
+    }
+  },
+  "xo": {
+    "space": 2,
+    "envs": [
+      "browser",
+      "webextensions"
+    ],
+    "ignores": [
+      "source/vendors",
+      "distribution",
+      "test"
+    ],
+    "globals": [
+      "browser",
+      "$",
+      "jQuery",
+      "videojs"
+    ],
+    "rules": {
+      "import/no-unassigned-import": "off",
+      "@typescript-eslint/no-floating-promises": "off",
+      "@typescript-eslint/prefer-readonly-parameter-types": "off",
+      "unicorn/no-fn-reference-in-iterator": "off"
+    }
+  },
+  "stylelint": {
+    "extends": "stylelint-config-xo-space",
+    "rules": {
+      "declaration-no-important": null
+    }
+  }
+}

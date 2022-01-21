@@ -1,0 +1,36 @@
+{
+  "manifest_version": 2,
+  "name": "Wordle Solver",
+  "version": "0.0.1",
+  "description": "A small web extension to automatically solve the Wordle game",
+  "author": "Astropilot",
+  "homepage_url": "https://github.com/Astropilot/Wordle_Solver",
+  "minimum_chrome_version": "74",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "wordle_solver@astropilot.github.io",
+      "strict_min_version": "67.0"
+    }
+  },
+  "icons": {
+    "624": "icons/wordle_logo.png"
+  },
+  "permissions": [
+    "*://*.powerlanguage.co.uk/wordle/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.powerlanguage.co.uk/wordle/*"
+      ],
+      "run_at": "document_idle",
+      "js": [
+        "wordle/injector.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    "wordle/dictionnary_en.json",
+    "wordle/solver.js"
+  ]
+}

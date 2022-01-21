@@ -1,0 +1,21 @@
+{
+  "extends": "@sindresorhus/tsconfig/tsconfig.json",
+  "compilerOptions": {
+    "target": "es2019",
+    "strict": true,
+    "removeComments": true,
+    "declaration": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "module": "CommonJS",
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
+    "lib": [
+      "ES2021",
+      "DOM",
+      "DOM.Iterable"
+    ]
+  },
+  "include": ["source", "webpack.config.ts"]
+}
